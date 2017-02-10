@@ -44,6 +44,8 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
         $output->writeln('Host: ' . $host, OutputInterface::VERBOSITY_VERBOSE);
         $output->writeln('Base URL: ' . $baseUrl, OutputInterface::VERBOSITY_VERBOSE);
         $output->writeln("Directories: ['" . join("', '", $directories) . "']", OutputInterface::VERBOSITY_VERBOSE);
+        $output->writeln("Image config", OutputInterface::VERBOSITY_VERBOSE);
+        $output->writeln(print_r($this->getImageConfig(), true), OutputInterface::VERBOSITY_VERBOSE);
 
         $ftp = new \Ftp();
         $ftp->connect($host);
@@ -222,24 +224,7 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
     }
 
     protected function getImageConfig() {
-        return [
-            'product' => [
-                'width'  => 400,
-                'height' => 400,
-            ],
-            'related' => [
-                'width'  => 240,
-                'height' => 240,
-            ],
-            'thumbnail' => [
-                'width'  => 240,
-                'height' => 240,
-            ],
-            'popup' => [
-                'width'  => 850,
-                'height' => 850,
-            ],
-        ];
+        return $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.image_settings');
     }
 
     protected function parseFtpRawlist($list, $win = false) {

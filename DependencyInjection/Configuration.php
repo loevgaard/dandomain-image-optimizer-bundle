@@ -20,6 +20,15 @@ class Configuration implements ConfigurationInterface
                 ->arrayNode('directories')
                     ->prototype('scalar')->end()
                 ->end()
+                ->arrayNode('image_settings')
+                    ->useAttributeAsKey('name')
+                    ->prototype('array')
+                        ->children()
+                            ->integerNode('width')->end()
+                            ->integerNode('height')->end()
+                        ->end()
+                    ->end()
+                ->end()
             ->end()
         ;
 
