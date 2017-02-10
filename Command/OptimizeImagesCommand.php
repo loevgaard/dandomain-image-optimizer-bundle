@@ -17,6 +17,7 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
             ->setDescription('This command optimizes images on the FTP')
             ->addOption('force', null, InputOption::VALUE_NONE, 'If set, the command will force optimization of all images')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'If set, the command will not optimize any images, but output the names of the images that would have been optimized')
+            ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'If set, the command will optimize <limit> images')
         ;
     }
 
@@ -31,6 +32,7 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
          */
         $optionForce    = $input->getOption('force');
         $optionDryRun   = $input->getOption('dry-run');
+        $optionLimit    = $input->getOption('limit');
         $host           = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.host');
         $username       = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.username');
         $password       = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.password');
@@ -47,6 +49,8 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
         $ftp->pasv(true);
 
         $queue = [];
+        $i = 0;
+        $limitReached = false;
         foreach($directories as $directory) {
             $directory      = trim($directory, '/');
             $rawFileList    = $ftp->rawList($directory);
@@ -71,6 +75,10 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
             }
 
             foreach($popupImages as $popupImage) {
+                if($optionLimit && $i >= $optionLimit) {
+                    $limitReached = true;
+                    break;
+                }
                 $filename = $popupImage['filename'];
                 $add = true;
                 if(isset($optimizedImages[$popupImage['filename']])) {
@@ -81,7 +89,12 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
                 }
                 if($add) {
                     $queue[] = $directory . '/' . $filename;
+                    $i++;
                 }
+            }
+
+            if($limitReached) {
+                break;
             }
         }
 
