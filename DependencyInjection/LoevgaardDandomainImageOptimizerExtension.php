@@ -17,8 +17,5 @@ class LoevgaardDandomainImageOptimizerExtension extends Extension
         $container->setParameter('loevgaard_dandomain_image_optimizer.username',    $config['username']);
         $container->setParameter('loevgaard_dandomain_image_optimizer.password',    $config['password']);
         $container->setParameter('loevgaard_dandomain_image_optimizer.directories', $config['directories']);
-
-        $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
-        $loader->load('services.yml');
     }
 }
