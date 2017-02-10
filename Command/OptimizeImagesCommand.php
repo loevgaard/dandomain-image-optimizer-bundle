@@ -32,25 +32,27 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
         $optionForce    = $input->getOption('force');
         $optionDryRun   = $input->getOption('dry-run');
         $host           = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.host');
+        $username       = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.username');
+        $password       = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.password');
+        $directories    = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.directories');
 
-        $output->writeln('Option force: ' . ($optionForce ? 'true' : 'false'));
-        $output->writeln('Option dry run: ' . ($optionDryRun ? 'true' : 'false'));
+        $output->writeln('Force: ' . ($optionForce ? 'true' : 'false'), OutputInterface::VERBOSITY_VERBOSE);
+        $output->writeln('Dry run: ' . ($optionDryRun ? 'true' : 'false'), OutputInterface::VERBOSITY_VERBOSE);
+        $output->writeln("Directories: ['" . join("', '", $directories) . "']", OutputInterface::VERBOSITY_VERBOSE);
 
         $ftp = new \Ftp();
         $ftp->connect($host);
-        $ftp->login($this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.username'), $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.password'));
+        $ftp->login($username, $password);
         $ftp->pasv(true);
 
         $queue = [];
-        $directories = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.directories');
-
         foreach($directories as $directory) {
             $directory      = trim($directory, '/');
             $rawFileList    = $ftp->rawList($directory);
             $fileList       = $this->parseFtpRawlist($rawFileList, true); // dandomain is windows so we set $win = true
 
             if($fileList === false) {
-                $output->writeln('parseFtpRawlist returned false');
+                $output->writeln('parseFtpRawlist returned false', OutputInterface::VERBOSITY_VERBOSE);
                 continue;
             }
 
@@ -83,7 +85,7 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
         }
 
         $c = count($queue);
-        $output->writeln('<info>Optimizing ' . count($queue) . ' images</info>');
+        $output->writeln('<info>Optimizing ' . count($queue) . ' images</info>', OutputInterface::VERBOSITY_VERBOSE);
 
         if($c) {
             $imageConfig = $this->getImageConfig();
@@ -94,26 +96,24 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
                 $dir                = dirname($image);
                 $imageVariations    = $this->getImageVariations($image);
 
-                if ($optionDryRun || $output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                    $output->writeln('Optimizing ' . $imageVariations['product'] . '...');
+                if ($optionDryRun) {
+                    $output->writeln('Optimizing ' . $imageVariations['product'] . '...', OutputInterface::VERBOSITY_VERBOSE);
                 }
 
                 try {
                     if(!$optionDryRun) {
-                        if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                            $output->writeln("Copying $image to $dir/{$imageVariations['original']}");
-                        }
+                        $output->writeln("Copying $image to $dir/{$imageVariations['original']}", OutputInterface::VERBOSITY_VERBOSE);
 
                         // save existing image as the original
                         $res = $this->ftpCopy($ftp, $image, $dir . '/' . $imageVariations['original']);
 
                         if($res === false) {
-                            $output->writeln('There was an error copying ' . $image);
+                            $output->writeln('There was an error copying ' . $image, OutputInterface::VERBOSITY_VERBOSE);
                             continue;
                         }
                     }
                 } catch(\FtpException $e) {
-                    $output->writeln($e->getMessage());
+                    $output->writeln($e->getMessage(), OutputInterface::VERBOSITY_VERBOSE);
                     continue;
                 }
 
@@ -158,12 +158,12 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
                                 $ftp->put($dir . '/' . $imageVariations['product'], $tmpFile, FTP_BINARY);
                             }
                         } catch (\Exception $e) {
-                            $output->writeln($e->getMessage());
+                            $output->writeln($e->getMessage(), OutputInterface::VERBOSITY_VERBOSE);
 
                             $ftp->delete($dir . '/' . $imageVariations['original']);
                         }
                     } catch (\Exception $e) {
-                        $output->writeln($e->getMessage());
+                        $output->writeln($e->getMessage(), OutputInterface::VERBOSITY_VERBOSE);
                         $ftp->reconnect();
                         $ftp->delete($dir . '/' . $imageVariations['original']);
                     }
@@ -174,14 +174,12 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
                 // delete tmp file
                 @unlink($tmpFile);
 
-                if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                    $output->writeln('- Optimized ');
-                }
+                $output->writeln('- Optimized ', OutputInterface::VERBOSITY_VERBOSE);
 
                 if($i % 20 == 0) {
                     $elapsed    = ceil((time() - $startTime) / 60);
                     $timeLeft   = round((($c / $i) * $elapsed) / 60, 2);
-                    $output->writeln("<info>$i/$c | Elapsed time: $elapsed minutes | Estimated time left: $timeLeft hours</info>");
+                    $output->writeln("<info>$i/$c | Elapsed time: $elapsed minutes | Estimated time left: $timeLeft hours</info>", OutputInterface::VERBOSITY_VERBOSE);
                 }
 
                 $i++;
