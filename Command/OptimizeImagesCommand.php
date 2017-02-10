@@ -33,6 +33,7 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
         $optionForce    = $input->getOption('force');
         $optionDryRun   = $input->getOption('dry-run');
         $optionLimit    = $input->getOption('limit');
+        $baseUrl        = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.base_url');
         $host           = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.host');
         $username       = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.username');
         $password       = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.password');
@@ -41,6 +42,7 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
         $output->writeln('Force: ' . ($optionForce ? 'true' : 'false'), OutputInterface::VERBOSITY_VERBOSE);
         $output->writeln('Dry run: ' . ($optionDryRun ? 'true' : 'false'), OutputInterface::VERBOSITY_VERBOSE);
         $output->writeln('Host: ' . $host, OutputInterface::VERBOSITY_VERBOSE);
+        $output->writeln('Base URL: ' . $baseUrl, OutputInterface::VERBOSITY_VERBOSE);
         $output->writeln("Directories: ['" . join("', '", $directories) . "']", OutputInterface::VERBOSITY_VERBOSE);
 
         $ftp = new \Ftp();
@@ -138,7 +140,7 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
                         try {
                             if(!$optionDryRun) {
                                 /** @var Source $source */
-                                $source = \Tinify\fromUrl($host . '/' . $image);
+                                $source = \Tinify\fromUrl($baseUrl . '/' . $image);
 
                                 // popup
                                 $source->toFile($tmpFile);
