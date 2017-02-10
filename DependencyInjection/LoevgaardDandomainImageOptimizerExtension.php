@@ -13,6 +13,7 @@ class LoevgaardDandomainImageOptimizerExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
+        $container->setParameter('loevgaard_dandomain_image_optimizer.base_url',    $config['base_url']);
         $container->setParameter('loevgaard_dandomain_image_optimizer.host',        $config['host']);
         $container->setParameter('loevgaard_dandomain_image_optimizer.username',    $config['username']);
         $container->setParameter('loevgaard_dandomain_image_optimizer.password',    $config['password']);

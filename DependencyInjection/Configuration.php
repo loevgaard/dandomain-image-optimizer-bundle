@@ -13,6 +13,7 @@ class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
+                ->scalarNode('base_url')->end()
                 ->scalarNode('host')->end()
                 ->scalarNode('username')->end()
                 ->scalarNode('password')->end()
