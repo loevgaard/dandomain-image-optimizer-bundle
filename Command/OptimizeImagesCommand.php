@@ -38,6 +38,7 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
 
         $output->writeln('Force: ' . ($optionForce ? 'true' : 'false'), OutputInterface::VERBOSITY_VERBOSE);
         $output->writeln('Dry run: ' . ($optionDryRun ? 'true' : 'false'), OutputInterface::VERBOSITY_VERBOSE);
+        $output->writeln('Host: ' . $host, OutputInterface::VERBOSITY_VERBOSE);
         $output->writeln("Directories: ['" . join("', '", $directories) . "']", OutputInterface::VERBOSITY_VERBOSE);
 
         $ftp = new \Ftp();
