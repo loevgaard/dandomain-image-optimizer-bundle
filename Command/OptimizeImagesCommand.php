@@ -18,6 +18,7 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
             ->addOption('force', null, InputOption::VALUE_NONE, 'If set, the command will force optimization of all images')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'If set, the command will not optimize any images, but output the names of the images that would have been optimized')
             ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'If set, the command will optimize <limit> images')
+            ->addOption('image', null, InputOption::VALUE_REQUIRED, 'If set, the command will optimize only this image. This should be a absolute path, i.e. /images/image.jpg')
         ;
     }
 
@@ -33,6 +34,7 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
         $optionForce    = $input->getOption('force');
         $optionDryRun   = $input->getOption('dry-run');
         $optionLimit    = $input->getOption('limit');
+        $optionImage    = $input->getOption('image');
         $baseUrl        = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.base_url');
         $host           = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.host');
         $username       = $this->getContainer()->getParameter('loevgaard_dandomain_image_optimizer.username');
@@ -53,52 +55,57 @@ class OptimizeImagesCommand extends ContainerAwareCommand implements LockableCom
         $ftp->pasv(true);
 
         $queue = [];
-        $i = 0;
-        $limitReached = false;
-        foreach($directories as $directory) {
-            $directory      = trim($directory, '/');
-            $rawFileList    = $ftp->rawList($directory);
-            $fileList       = $this->parseFtpRawlist($rawFileList, true); // dandomain is windows so we set $win = true
 
-            if($fileList === false) {
-                $output->writeln('parseFtpRawlist returned false', OutputInterface::VERBOSITY_VERBOSE);
-                continue;
-            }
+        if($optionImage) {
+            $queue[] = trim($optionImage, '/');
+        } else {
+            $i = 0;
+            $limitReached = false;
+            foreach ($directories as $directory) {
+                $directory = trim($directory, '/');
+                $rawFileList = $ftp->rawList($directory);
+                $fileList = $this->parseFtpRawlist($rawFileList, true); // dandomain is windows so we set $win = true
 
-            $popupImages = array_filter($fileList, function ($val) {
-                return preg_match('/\-p\.(jpg|png|gif)$/i', $val['filename']) === 1;
-            });
-
-            $originalImages = array_filter($fileList, function ($val) {
-                return preg_match('/\-o\.(jpg|png|gif)$/i', $val['filename']) === 1;
-            });
-            $optimizedImages = [];
-            foreach($originalImages as $originalImage) {
-                $originalImageVariations = $this->getImageVariations($originalImage['filename']);
-                $optimizedImages[$originalImageVariations['popup']] = $originalImageVariations['original'];
-            }
-
-            foreach($popupImages as $popupImage) {
-                if($optionLimit && $i >= $optionLimit) {
-                    $limitReached = true;
-                    break;
+                if ($fileList === false) {
+                    $output->writeln('parseFtpRawlist returned false', OutputInterface::VERBOSITY_VERBOSE);
+                    continue;
                 }
-                $filename = $popupImage['filename'];
-                $add = true;
-                if(isset($optimizedImages[$popupImage['filename']])) {
-                    $filename = $optimizedImages[$popupImage['filename']];
-                    if(!$optionForce) {
-                        $add = false;
+
+                $popupImages = array_filter($fileList, function ($val) {
+                    return preg_match('/\-p\.(jpg|png|gif)$/i', $val['filename']) === 1;
+                });
+
+                $originalImages = array_filter($fileList, function ($val) {
+                    return preg_match('/\-o\.(jpg|png|gif)$/i', $val['filename']) === 1;
+                });
+                $optimizedImages = [];
+                foreach ($originalImages as $originalImage) {
+                    $originalImageVariations = $this->getImageVariations($originalImage['filename']);
+                    $optimizedImages[$originalImageVariations['popup']] = $originalImageVariations['original'];
+                }
+
+                foreach ($popupImages as $popupImage) {
+                    if ($optionLimit && $i >= $optionLimit) {
+                        $limitReached = true;
+                        break;
+                    }
+                    $filename = $popupImage['filename'];
+                    $add = true;
+                    if (isset($optimizedImages[$popupImage['filename']])) {
+                        $filename = $optimizedImages[$popupImage['filename']];
+                        if (!$optionForce) {
+                            $add = false;
+                        }
+                    }
+                    if ($add) {
+                        $queue[] = $directory . '/' . $filename;
+                        $i++;
                     }
                 }
-                if($add) {
-                    $queue[] = $directory . '/' . $filename;
-                    $i++;
-                }
-            }
 
-            if($limitReached) {
-                break;
+                if ($limitReached) {
+                    break;
+                }
             }
         }
 
