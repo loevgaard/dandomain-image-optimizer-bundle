@@ -1,0 +1,5 @@
+services:
+    loevgaard_dandomain_image_optimizer.optimizer:
+        class: Loevgaard\DandomainImageOptimizerBundle\Service\Optimizer
+        calls:
+            - [setContainer, ['@service_container']]

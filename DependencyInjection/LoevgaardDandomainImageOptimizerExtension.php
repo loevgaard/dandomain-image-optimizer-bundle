@@ -1,7 +1,9 @@
 <?php
 namespace Loevgaard\DandomainImageOptimizerBundle\DependencyInjection;
 
+use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 class LoevgaardDandomainImageOptimizerExtension extends Extension
@@ -17,5 +19,8 @@ class LoevgaardDandomainImageOptimizerExtension extends Extension
         $container->setParameter('loevgaard_dandomain_image_optimizer.password',        $config['password']);
         $container->setParameter('loevgaard_dandomain_image_optimizer.directories',     $config['directories']);
         $container->setParameter('loevgaard_dandomain_image_optimizer.image_settings',  $config['image_settings']);
+
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
+        $loader->load('services.yml');
     }
 }

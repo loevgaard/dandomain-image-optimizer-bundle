@@ -16,6 +16,7 @@
         "php": "^5.5.9 || ^7.0",
         "symfony/framework-bundle": "^2.7 || ^3.0",
         "symfony/filesystem": "^2.7 || ^3.0",
+        "symfony/console": "^2.7 || ^3.0",
         "loevgaard/tinypng-bundle": "^0.1.0",
         "dg/ftp-php": "^1.0.0",
         "loevgaard/lockable-command-bundle": "^0.1.0"
