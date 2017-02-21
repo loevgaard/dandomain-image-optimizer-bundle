@@ -207,7 +207,6 @@ class Optimizer implements ContainerAwareInterface, OutputAwareInterface
      * @param string $targetDir The directory on the FTP where the files should be uploaded
      */
     public function uploadAndOptimizeImage($imageSource, $targetDir) {
-        $ftp = $this->getFtp();
         $targetDir = trim($targetDir, '/');
         $imageConfig = $this->getImageConfig();
         $imageVariations = $this->getImageVariations($imageSource);
@@ -215,6 +214,9 @@ class Optimizer implements ContainerAwareInterface, OutputAwareInterface
 
         /** @var Source $source */
         $source = \Tinify\fromFile($imageSource);
+
+        // connect to FTP
+        $ftp = $this->getFtp();
 
         // create popup image
         $popup = $source->resize([
@@ -351,6 +353,7 @@ class Optimizer implements ContainerAwareInterface, OutputAwareInterface
         $ftp->connect($host);
         $ftp->login($username, $password);
         $ftp->pasv(true);
+        $ftp->setOption(FTP_TIMEOUT_SEC, 10 * 60); // 10 minutes
 
         return $ftp;
     }
