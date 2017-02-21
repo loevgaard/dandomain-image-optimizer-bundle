@@ -208,6 +208,7 @@ class Optimizer implements ContainerAwareInterface, OutputAwareInterface
      */
     public function uploadAndOptimizeImage($imageSource, $targetDir) {
         $ftp = $this->getFtp();
+        $targetDir = trim($targetDir, '/');
         $imageConfig = $this->getImageConfig();
         $imageVariations = $this->getImageVariations($imageSource);
         $tmpFile = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . '/' . basename($imageSource);
